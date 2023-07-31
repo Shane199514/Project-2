@@ -1,0 +1,134 @@
+clc
+clear all
+close all
+kc = 1.4; %specific heat ratio for compressrion
+ke = 1.35; %specific heat ratio for expansion
+qc = 45000; %heat of combustion, kJ/kg
+Rg = 0.287; %air gas constant, kJ/kg*K
+Po = 102; %atmospheric pressure at sea level, cases 1 and 2, kPa
+% Po = 76.465; %atmospheric pressure at 1908 m, case 3, kPa
+To = 75; %ambient temperature for case 1,2 and 3 degrees C
+Tic = 125.742; %intercooled temperature for case 1,2 and 3 degrees C
+b = 84/1000; %bore, m
+s = 89.6/1000; %stroke, m
+r = 145/1000; %connecting rod length, m
+a = (s/2)/1000; %crank radius, m
+R = r/a; % rod length-crank radius ratio
+nc = 6; %number of cylinders
+cr = 10.2; %compression ratio
+vd = ((pi/4)*s*b^2)*nc; %total displacement volume, m^3
+T1 = To + Tic + 273; %temperature at start of compression stroke, K
+P1 = Po + 50.293;
+% P1 = Po + 72.821;
+v1 = (cr/(cr - 1))*vd; %cylinder volume at BDC, m^3
+v2 = v1 - vd; %cylinder volume at TDC (clearance volume), m^3
+T2 = T1*cr^(kc - 1); %temperature at the end of compression stroke, K
+P2 = P1*cr^kc; %pressure at the end of compression stroke, kPa
+T3 = 1810.78; %temperature at the beginning of expansion stroke, K
+P3 = P2*(T3/T2); %pressure at the beginning of expansion stroke, kPa
+T4 = T3*(1/cr)^(ke - 1); %temperature at the end of expansion stroke, kPa
+P4 = P3*(1/cr)^ke; %pressure at the end of expansion stroke, kPa
+theta = 0:1:180; %crank angle from TDC to BDC, degrees
+v3 = v2; %cylinder volume at TDC, beginning of expansion stroke, m^3
+Pv1 = P1*v1^kc; %isentropic compression term
+Pv3 = P3*v3^ke; %isentropic expansion term
+v1to2 = v2.*(1 + 0.5.*(cr - 1).*(R + 1 - cosd(theta) - sqrt(R.^2 - (sind(theta)).^2))); %volume values during compression, m^3
+v3to4 = v3.*(1 + 0.5.*(cr - 1).*(R + 1 - cosd(theta) - sqrt(R.^2 - (sind(theta)).^2))); %volume values during expansion, m^3
+P1to2 = Pv1./(v1to2.^kc); %pressure values during compression, kPa
+P3to4 = Pv3./(v3to4.^ke); %pressure values during expansion, kPa
+%---1---%
+nth = 0.85*(1 - (1/cr)^(kc - 1)); %actual otto indicated thermal efficiency
+Pe = Po; %exhaust pressure (atmospheric), kPa
+f = (1/cr)*(Pe/P4)^(1/ke); %residual fraction of exhaust gases in combustion chamber after exhaust stroke
+rho = P1/(Rg*T1); %inlet density, kg/m^3
+Nt = 3000/60; %max torque engine speed, RPS
+N = 3750/60; %average engine speed, RPS
+Wi_dot = 220.65; %design engine max indicated hp, kW
+nm = 0.65; %mechanical efficiency
+Wb_dot = nm*Wi_dot; %design engine max brake hp, kW
+btau = (Wb_dot*1000)/(2*pi*Nt); %brake torque, Nm
+bsfc = 334.6; %brake specific fuel consumption, 0.55 lb/hp-hr converted, g/kW-hr
+bsfc_s = (bsfc/1000)/3600; %bsfc converted to kg/kW-s or kg/kJ
+output0 = 'The temperature and pressure for state 1 are, respectively, %6.4f K and %6.4f kPa.\n\n';
+fprintf(output0, T1, P1)
+output1 = 'The temperature and pressure for state 2 are, respectively, %6.4f K and %6.4f kPa.\n\n';
+fprintf(output1, T2, P2)
+output2 = 'The temperature and pressure for state 3 are, respectively, %6.4f K and %6.4f kPa.\n\n';
+fprintf(output2, T3, P3)
+output3 = 'The temperature and pressure for state 4 are, respectively, %6.4f K and %6.4f kPa.\n\n';
+fprintf(output3, T4, P4)
+
+RPMPlot = [500 1000 2000 3000 4000 5000 6000 7000]; %RPM values for plotting VE, RPM
+NPlot = RPMPlot./60;
+AFPlot = [12.0 12.1 13.0 11.8 10.6 10.9 10.3 10.6]; %air-fuel ratios obtained from a stock Evo IX ECU at 100% engine load
+AF = mean(AFPlot);
+ma_dotPlot = bsfc_s*Wb_dot*AFPlot; %mass flow rate of air, kg/s
+VEPlot = (ma_dotPlot./(rho*vd*0.5.*N))*100; %volumetric efficiency, percent
+output4 = 'The VE value for an RPM of %6.4f was %6.4f using the AF map method.\n\n';
+fprintf(output4, RPMPlot(1,1), VEPlot(1,1))
+output5 = 'The VE value for an RPM of %6.4f was %6.4f using the AF map method.\n\n';
+fprintf(output5, RPMPlot(1,2), VEPlot(1,2))
+output5 = 'The VE value for an RPM of %6.4f was %6.4f using the AF map method.\n\n';
+fprintf(output5, RPMPlot(1,3), VEPlot(1,3))
+output6 = 'The VE value for an RPM of %6.4f was %6.4f using the AF map method.\n\n';
+fprintf(output6, RPMPlot(1,4), VEPlot(1,4))
+output7 = 'The VE value for an RPM of %6.4f was %6.4f using the AF map method.\n\n';
+fprintf(output7, RPMPlot(1,5), VEPlot(1,5))
+output8 = 'The VE value for an RPM of %6.4f was %6.4f using the AF map method.\n\n';
+fprintf(output8, RPMPlot(1,6), VEPlot(1,6))
+output9 = 'The VE value for an RPM of %6.4f was %6.4f using the AF map method.\n\n';
+fprintf(output9, RPMPlot(1,7), VEPlot(1,7))
+output10 = 'The VE value for an RPM of %6.4f was %6.4f using the AF map method.\n\n';
+fprintf(output10, RPMPlot(1,8), VEPlot(1,8))
+
+%---4---%
+VEPlotApprox = [133 137 142 144 142 137 130 124]; %approximate VE values obtained from megamanual/megasquirt, case 1 and 2, percent
+% VEPlotApprox = [189 200 215 218 209 199 189 180]; %approximate VE values obtained from megamanual/megasquirt, case 3, percent
+
+figure %VE vs RPM
+plot(RPMPlot, VEPlot)
+hold on
+plot(RPMPlot, VEPlotApprox)
+xlabel('RPM')
+ylabel('Volumetric efficiency (%)')
+title('Case 1 VE vs RPM')
+% title('Case 2 VE vs RPM')
+% title('Case 3 VE vs RPM')
+legend('VE AF Map', 'VE MegaManual')
+
+%---3---%
+tau = ((rho*vd*VEPlot*0.01)/(4*pi*bsfc_s*AF))*1000;
+WbPlot = (2*pi*NPlot.*tau)/1000;
+
+figure %power-torque curves
+yyaxis left
+plot(RPMPlot, tau)
+ylabel('Torque (Nm)')
+hold on
+yyaxis right
+plot(RPMPlot, WbPlot)
+ylabel('Power (kW)')
+title('Theoretical Dyno Results')
+legend('Torque', 'Power')
+%---2---%
+figure %pv diagram
+plot(v1to2, P1to2)
+hold on
+plot([v2 v2],[P2 P3])
+plot(v3to4, P3to4)
+plot([v1 v1],[P1 P4])
+plot([v1 v1],[P1 Po])
+plot([v1 v2],[Po Po])
+plot([v2 v2],[Po P1])
+plot([v2 v1],[P1 P1])
+xlabel('Volume (m^3)')
+ylabel('Pressure (kPa)')
+title('Case 1 PV Diagram')
+% title('Case 2 PV Diagram')
+% title('Case 3 PV Diagram')
+text(v1 + 0.5e-5, P1 + 40, '1', 'FontSize', 8)
+text(v2 - 0.125e-4, P2,'2','FontSize', 8)
+text(v2 - 0.125e-4, P3 + 60, '3','FontSize', 8)
+text(v1 + 0.5e-5, P4 + 60, '4', 'FontSize', 8)
+text(v1 + 0.5e-5, Po - 50, '5', 'FontSize', 8)
+text(v2 - 0.125e-4, Po - 50, '6', 'FontSize', 8)
